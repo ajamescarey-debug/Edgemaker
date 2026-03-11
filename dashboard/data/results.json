@@ -1,0 +1,24 @@
+{
+  "date": "",
+  "generated_at": "",
+  "pipeline_version": "6.0",
+  "daily_brief": "",
+  "qualifying_legs": [],
+  "recommended_parlay": null,
+  "signal_summary": {
+    "base_model_legs": 0,
+    "final_qualifying_legs": 0,
+    "sharp_confirmed_legs": 0,
+    "b2b_flagged_legs": 0,
+    "injury_risk_legs": 0
+  },
+  "injury_report": [],
+  "history": [],
+  "summary": {
+    "total_qualifying_legs": 0,
+    "parlay_found": false,
+    "parlay_odds": null,
+    "parlay_ev": null
+  },
+  "model_metrics": {}
+}
