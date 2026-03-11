@@ -12,9 +12,8 @@ jobs:
     timeout-minutes: 30
 
     steps:
-
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python
         run: |
@@ -25,9 +24,13 @@ jobs:
         run: |
           pip3 install requests pandas numpy scikit-learn xgboost joblib python-dotenv anthropic
 
+      - name: Debug — show phase1 lines 40-45
+        run: sed -n '40,45p' phase1_data_pipeline.py
+
       - name: Phase 1 — Pull NBA + odds data
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          BALLDONTLIE_API_KEY: ${{ secrets.BALLDONTLIE_API_KEY }}
         run: python3 phase1_data_pipeline.py
 
       - name: Phase 5c — Line snapshot
