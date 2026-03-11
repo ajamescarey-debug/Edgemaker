@@ -35,6 +35,11 @@ def get_todays_games():
     url = "https://api.balldontlie.io/v1/games"
     params = {"start_date": TODAY, "end_date": TODAY, "per_page": 30}
     resp = requests.get(url, params=params, headers=BDL_HEADERS)
+    print(f"[BallDontLie] Status: {resp.status_code}")
+    print(f"[BallDontLie] Response: {resp.text[:300]}")
+    if resp.status_code != 200:
+        print(f"[BallDontLie] API error — returning empty games list")
+        return []
     games = resp.json().get("data", [])
     print(f"[BallDontLie] Found {len(games)} games today ({TODAY})")
     return games
