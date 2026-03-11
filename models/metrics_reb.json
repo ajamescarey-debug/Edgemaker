@@ -1,0 +1,9 @@
+{
+  "stat": "reb",
+  "test_accuracy": 0.5828,
+  "roc_auc": 0.612,
+  "cv_mean": 0.5828,
+  "cv_std": 0.0,
+  "n_samples": 53014,
+  "trained_at": "2026-03-12T00:07:32.328112"
+}

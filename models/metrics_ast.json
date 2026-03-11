@@ -1,0 +1,9 @@
+{
+  "stat": "ast",
+  "test_accuracy": 0.5875,
+  "roc_auc": 0.6195,
+  "cv_mean": 0.5875,
+  "cv_std": 0.0,
+  "n_samples": 53014,
+  "trained_at": "2026-03-12T00:07:37.565913"
+}

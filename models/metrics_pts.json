@@ -1,0 +1,9 @@
+{
+  "stat": "pts",
+  "test_accuracy": 0.5777,
+  "roc_auc": 0.6071,
+  "cv_mean": 0.5777,
+  "cv_std": 0.0,
+  "n_samples": 53014,
+  "trained_at": "2026-03-12T00:07:26.980305"
+}
