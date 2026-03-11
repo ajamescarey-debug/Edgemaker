@@ -1,0 +1,7 @@
+data/*.csv
+data/*.json
+data/snapshot_*
+models/*.pkl
+!dashboard/data/results.json
+!models/metrics_*.json
+!models/features_*.json
