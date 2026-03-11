@@ -22,46 +22,36 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # ─── CONFIG ───────────────────────────────────────────────
-ODDS_API_KEY = os.getenv("ODDS_API_KEY", "YOUR_KEY_HERE")
+ODDS_API_KEY       = os.getenv("ODDS_API_KEY", "")
+BALLDONTLIE_KEY    = os.getenv("BALLDONTLIE_API_KEY", "")
+BDL_HEADERS        = {"Authorization": BALLDONTLIE_KEY}
 DATA_DIR = "data"
 os.makedirs(DATA_DIR, exist_ok=True)
-
 TODAY = datetime.now().strftime("%Y-%m-%d")
 
 # ─── 1. BALLDONTLIE — PLAYER STATS ────────────────────────
 
 def get_todays_games():
-    """Pull today's NBA games from BallDontLie."""
-    url = f"https://www.balldontlie.io/api/v1/games"
-    params = {
-        "start_date": TODAY,
-        "end_date": TODAY,
-        "per_page": 30
-    }
-    resp = requests.get(url, params=params)
+    url = "https://api.balldontlie.io/v1/games"
+    params = {"start_date": TODAY, "end_date": TODAY, "per_page": 30}
+    resp = requests.get(url, params=params, headers=BDL_HEADERS)
     games = resp.json().get("data", [])
     print(f"[BallDontLie] Found {len(games)} games today ({TODAY})")
     return games
 
 def get_player_season_stats(player_id, season=2024):
-    """Get season averages for a player."""
-    url = f"https://www.balldontlie.io/api/v1/season_averages"
+    url = "https://api.balldontlie.io/v1/season_averages"
     params = {"season": season, "player_ids[]": player_id}
-    resp = requests.get(url, params=params)
+    resp = requests.get(url, params=params, headers=BDL_HEADERS)
     data = resp.json().get("data", [])
     return data[0] if data else None
 
 def get_recent_player_games(player_id, n=15):
-    """Get last N game logs for a player."""
-    url = "https://www.balldontlie.io/api/v1/stats"
-    params = {
-        "player_ids[]": player_id,
-        "per_page": n,
-        "seasons[]": 2024
-    }
-    resp = requests.get(url, params=params)
-    stats = resp.json().get("data", [])
-    return stats
+    url = "https://api.balldontlie.io/v1/stats"
+    params = {"player_ids[]": player_id, "per_page": n, "seasons[]": 2024}
+    resp = requests.get(url, params=params, headers=BDL_HEADERS)
+    data = resp.json().get("data", [])
+    return data
 
 def get_team_players(team_id):
     """Get active players for a team."""
