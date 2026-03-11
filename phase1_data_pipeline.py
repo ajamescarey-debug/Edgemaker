@@ -3,11 +3,9 @@
 PHASE 1: NBA PARLAY MODEL — DATA PIPELINE
 =============================================================
 Run this daily before games to pull fresh data.
-Requires: pip install requests pandas numpy python-dotenv
-
 API Keys needed:
-  - The Odds API: https://the-odds-api.com (free tier = 500 req/month)
-  - BallDontLie: https://www.balldontlie.io (free, no key needed)
+  - The Odds API: https://the-odds-api.com
+  - BallDontLie: https://www.balldontlie.io
 =============================================================
 """
 
@@ -22,148 +20,161 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # ─── CONFIG ───────────────────────────────────────────────
-ODDS_API_KEY = os.getenv("ODDS_API_KEY", "YOUR_KEY_HERE")
-DATA_DIR = "data"
+ODDS_API_KEY    = os.getenv("ODDS_API_KEY", "")
+BALLDONTLIE_KEY = os.getenv("BALLDONTLIE_API_KEY", "")
+BDL_HEADERS     = {"Authorization": BALLDONTLIE_KEY}
+DATA_DIR        = "data"
 os.makedirs(DATA_DIR, exist_ok=True)
-
 TODAY = datetime.now().strftime("%Y-%m-%d")
 
-# ─── 1. BALLDONTLIE — PLAYER STATS ────────────────────────
+
+# ─── 1. BALLDONTLIE — GAMES ───────────────────────────────
 
 def get_todays_games():
     """Pull today's NBA games from BallDontLie."""
-    url = f"https://www.balldontlie.io/api/v1/games"
-    params = {
-        "start_date": TODAY,
-        "end_date": TODAY,
-        "per_page": 30
-    }
-    resp = requests.get(url, params=params)
-    games = resp.json().get("data", [])
-    print(f"[BallDontLie] Found {len(games)} games today ({TODAY})")
-    return games
+    url    = "https://api.balldontlie.io/v1/games"
+    params = {"start_date": TODAY, "end_date": TODAY, "per_page": 30}
+
+    try:
+        resp = requests.get(url, params=params, headers=BDL_HEADERS, timeout=10)
+        print(f"[BallDontLie] Status: {resp.status_code}")
+        print(f"[BallDontLie] Response preview: {resp.text[:200]}")
+
+        if resp.status_code == 401:
+            print("[BallDontLie] Auth error — check BALLDONTLIE_API_KEY secret")
+            return []
+        if resp.status_code != 200:
+            print(f"[BallDontLie] Error {resp.status_code} — returning empty list")
+            return []
+
+        games = resp.json().get("data", [])
+        print(f"[BallDontLie] Found {len(games)} games today ({TODAY})")
+        return games
+
+    except Exception as e:
+        print(f"[BallDontLie] Exception: {e}")
+        return []
+
 
 def get_player_season_stats(player_id, season=2024):
     """Get season averages for a player."""
-    url = f"https://www.balldontlie.io/api/v1/season_averages"
+    url    = "https://api.balldontlie.io/v1/season_averages"
     params = {"season": season, "player_ids[]": player_id}
-    resp = requests.get(url, params=params)
-    data = resp.json().get("data", [])
-    return data[0] if data else None
+    try:
+        resp = requests.get(url, params=params, headers=BDL_HEADERS, timeout=10)
+        if resp.status_code != 200:
+            return None
+        data = resp.json().get("data", [])
+        return data[0] if data else None
+    except Exception:
+        return None
+
 
 def get_recent_player_games(player_id, n=15):
     """Get last N game logs for a player."""
-    url = "https://www.balldontlie.io/api/v1/stats"
-    params = {
-        "player_ids[]": player_id,
-        "per_page": n,
-        "seasons[]": 2024
-    }
-    resp = requests.get(url, params=params)
-    stats = resp.json().get("data", [])
-    return stats
+    url    = "https://api.balldontlie.io/v1/stats"
+    params = {"player_ids[]": player_id, "per_page": n, "seasons[]": 2024}
+    try:
+        resp = requests.get(url, params=params, headers=BDL_HEADERS, timeout=10)
+        if resp.status_code != 200:
+            return []
+        return resp.json().get("data", [])
+    except Exception:
+        return []
 
-def get_team_players(team_id):
-    """Get active players for a team."""
-    url = "https://www.balldontlie.io/api/v1/players"
-    params = {"team_ids[]": team_id, "per_page": 25}
-    resp = requests.get(url, params=params)
-    return resp.json().get("data", [])
 
 def build_player_features(player_id, player_name):
-    """
-    Build rolling features for a player used in the prop model.
-    Returns a feature dict.
-    """
+    """Build rolling features for a player used in the prop model."""
     recent = get_recent_player_games(player_id, n=15)
     if len(recent) < 5:
         return None
 
     df = pd.DataFrame([{
-        "pts": g["pts"] or 0,
-        "reb": g["reb"] or 0,
-        "ast": g["ast"] or 0,
-        "min": float(g["min"].split(":")[0]) if g.get("min") and ":" in str(g["min"]) else 0,
-        "fga": g["fga"] or 0,
-        "fg3a": g["fg3a"] or 0,
+        "pts": g.get("pts") or 0,
+        "reb": g.get("reb") or 0,
+        "ast": g.get("ast") or 0,
+        "min": float(str(g.get("min", "0")).split(":")[0]) if g.get("min") else 0,
+        "fga": g.get("fga") or 0,
+        "fg3a": g.get("fg3a") or 0,
     } for g in recent])
 
-    features = {
-        "player_id": player_id,
-        "player_name": player_name,
-        # Rolling averages
-        "pts_avg5": df["pts"].head(5).mean(),
-        "pts_avg10": df["pts"].head(10).mean(),
-        "pts_avg15": df["pts"].mean(),
-        "reb_avg5": df["reb"].head(5).mean(),
-        "reb_avg10": df["reb"].head(10).mean(),
-        "reb_avg15": df["reb"].mean(),
-        "ast_avg5": df["ast"].head(5).mean(),
-        "ast_avg10": df["ast"].head(10).mean(),
-        "ast_avg15": df["ast"].mean(),
-        # Consistency (std dev — lower = more predictable)
-        "pts_std5": df["pts"].head(5).std(),
-        "reb_std5": df["reb"].head(5).std(),
-        "ast_std5": df["ast"].head(5).std(),
-        # Usage proxy
-        "avg_minutes": df["min"].mean(),
-        "avg_fga": df["fga"].mean(),
-        # Hit rates (useful for threshold modelling)
-        "pts_over_15_rate": (df["pts"] > 15).mean(),
-        "pts_over_20_rate": (df["pts"] > 20).mean(),
-        "pts_over_25_rate": (df["pts"] > 25).mean(),
-        "reb_over_5_rate": (df["reb"] > 5).mean(),
-        "reb_over_8_rate": (df["reb"] > 8).mean(),
-        "ast_over_5_rate": (df["ast"] > 5).mean(),
-        "ast_over_7_rate": (df["ast"] > 7).mean(),
+    return {
+        "player_id":       player_id,
+        "player_name":     player_name,
+        "pts_avg5":        df["pts"].head(5).mean(),
+        "pts_avg10":       df["pts"].head(10).mean(),
+        "pts_avg15":       df["pts"].mean(),
+        "pts_std5":        df["pts"].head(5).std(),
+        "pts_std10":       df["pts"].head(10).std(),
+        "reb_avg5":        df["reb"].head(5).mean(),
+        "reb_avg10":       df["reb"].head(10).mean(),
+        "reb_avg15":       df["reb"].mean(),
+        "reb_std5":        df["reb"].head(5).std(),
+        "reb_std10":       df["reb"].head(10).std(),
+        "ast_avg5":        df["ast"].head(5).mean(),
+        "ast_avg10":       df["ast"].head(10).mean(),
+        "ast_avg15":       df["ast"].mean(),
+        "ast_std5":        df["ast"].head(5).std(),
+        "ast_std10":       df["ast"].head(10).std(),
+        "avg_minutes":     df["min"].mean(),
+        "pts_hit_15":      (df["pts"] > 15).mean(),
+        "pts_hit_20":      (df["pts"] > 20).mean(),
+        "pts_hit_25":      (df["pts"] > 25).mean(),
+        "reb_hit_5":       (df["reb"] > 5).mean(),
+        "reb_hit_8":       (df["reb"] > 8).mean(),
+        "ast_hit_5":       (df["ast"] > 5).mean(),
+        "ast_hit_7":       (df["ast"] > 7).mean(),
+        "is_home":         0,
+        "line":            df["pts"].mean(),
     }
-    return features
 
 
-# ─── 2. THE ODDS API — PLAYER PROPS + SPREADS ─────────────
+# ─── 2. THE ODDS API ──────────────────────────────────────
 
 def get_nba_odds_spreads():
     """Pull today's NBA game spreads."""
-    url = "https://api.the-odds-api.com/v4/sports/basketball_nba/odds/"
+    url    = "https://api.the-odds-api.com/v4/sports/basketball_nba/odds/"
     params = {
-        "apiKey": ODDS_API_KEY,
-        "regions": "au",          # change to 'us' if needed
-        "markets": "spreads,totals",
-        "oddsFormat": "decimal",
-        "dateFormat": "iso",
+        "apiKey":      ODDS_API_KEY,
+        "regions":     "au",
+        "markets":     "spreads,totals",
+        "oddsFormat":  "decimal",
+        "dateFormat":  "iso",
     }
-    resp = requests.get(url, params=params)
-    if resp.status_code != 200:
-        print(f"[OddsAPI] Error: {resp.status_code} — {resp.text}")
+    try:
+        resp = requests.get(url, params=params, timeout=10)
+        if resp.status_code != 200:
+            print(f"[OddsAPI] Error: {resp.status_code} — {resp.text[:200]}")
+            return []
+        games = resp.json()
+        print(f"[OddsAPI] Pulled spreads for {len(games)} NBA games")
+        return games
+    except Exception as e:
+        print(f"[OddsAPI] Exception: {e}")
         return []
-    games = resp.json()
-    print(f"[OddsAPI] Pulled spreads for {len(games)} NBA games")
-    return games
+
 
 def get_nba_player_props(event_id, market="player_points"):
-    """
-    Pull player props for a specific game.
-    Markets: player_points, player_rebounds, player_assists
-    """
-    url = f"https://api.the-odds-api.com/v4/sports/basketball_nba/events/{event_id}/odds"
+    """Pull player props for a specific game."""
+    url    = f"https://api.the-odds-api.com/v4/sports/basketball_nba/events/{event_id}/odds"
     params = {
-        "apiKey": ODDS_API_KEY,
-        "regions": "au",
-        "markets": market,
+        "apiKey":     ODDS_API_KEY,
+        "regions":    "au",
+        "markets":    market,
         "oddsFormat": "decimal",
         "dateFormat": "iso",
     }
-    resp = requests.get(url, params=params)
-    if resp.status_code != 200:
-        print(f"[OddsAPI] Props error: {resp.status_code}")
+    try:
+        resp = requests.get(url, params=params, timeout=10)
+        if resp.status_code != 200:
+            return None
+        return resp.json()
+    except Exception:
         return None
-    return resp.json()
+
 
 def extract_props_from_event(event_data, market_key):
-    """
-    Parse prop data from Odds API response into a clean dataframe.
-    Returns rows: player_name, line, over_odds, under_odds, bookmaker
-    """
+    """Parse prop data from Odds API response."""
     rows = []
     for bookmaker in event_data.get("bookmakers", []):
         for market in bookmaker.get("markets", []):
@@ -171,128 +182,81 @@ def extract_props_from_event(event_data, market_key):
                 continue
             for outcome in market.get("outcomes", []):
                 rows.append({
-                    "bookmaker": bookmaker["title"],
-                    "player": outcome.get("description", outcome.get("name", "")),
-                    "side": outcome["name"],  # Over / Under
-                    "line": outcome.get("point", None),
-                    "odds": outcome["price"],
-                    "market": market_key,
-                    "game_id": event_data["id"],
-                    "home_team": event_data["home_team"],
-                    "away_team": event_data["away_team"],
-                    "commence_time": event_data["commence_time"],
+                    "bookmaker":      bookmaker["title"],
+                    "player":         outcome.get("description", outcome.get("name", "")),
+                    "side":           outcome["name"],
+                    "line":           outcome.get("point"),
+                    "odds":           outcome["price"],
+                    "market":         market_key,
+                    "game_id":        event_data["id"],
+                    "home_team":      event_data["home_team"],
+                    "away_team":      event_data["away_team"],
+                    "commence_time":  event_data["commence_time"],
                 })
     return rows
 
-def get_best_line(props_df, player_name, side="Over"):
-    """Find the best odds available for a player prop across books."""
-    filtered = props_df[
-        (props_df["player"].str.contains(player_name, case=False)) &
-        (props_df["side"] == side)
-    ]
-    if filtered.empty:
-        return None
-    best = filtered.loc[filtered["odds"].idxmax()]
-    return best
 
-
-# ─── 3. EV CALCULATOR ────────────────────────────────────
-
-def decimal_to_implied_prob(decimal_odds):
-    """Convert decimal odds to implied probability (with juice removed)."""
-    return 1 / decimal_odds
+# ─── 3. EV + KELLY ────────────────────────────────────────
 
 def calculate_ev(model_prob, decimal_odds):
-    """
-    Expected Value = (model_prob * profit) - ((1 - model_prob) * stake)
-    Normalised to 1 unit stake.
-    """
     profit = decimal_odds - 1
-    ev = (model_prob * profit) - ((1 - model_prob) * 1)
-    return round(ev, 4)
+    return round((model_prob * profit) - ((1 - model_prob) * 1), 4)
 
 def calculate_edge(model_prob, decimal_odds):
-    """Edge = model probability minus book implied probability."""
-    implied = decimal_to_implied_prob(decimal_odds)
-    return round(model_prob - implied, 4)
+    return round(model_prob - (1 / decimal_odds), 4)
 
 def kelly_criterion(model_prob, decimal_odds, fraction=0.25):
-    """
-    Fractional Kelly stake sizing.
-    fraction=0.25 = Quarter Kelly (conservative, recommended).
-    Returns recommended stake as % of bankroll.
-    """
     b = decimal_odds - 1
     q = 1 - model_prob
     kelly = (model_prob * b - q) / b
-    return round(max(kelly * fraction, 0), 4)  # Never negative
+    return round(max(kelly * fraction, 0), 4)
 
 
 # ─── 4. PARLAY BUILDER ───────────────────────────────────
 
 def check_correlation(leg1, leg2):
-    """
-    Basic correlation check — don't combine legs from same game
-    that are positively correlated (e.g. both player points from same team).
-    Returns True if legs are safe to combine.
-    """
-    # Same game check
     if leg1.get("game_id") == leg2.get("game_id"):
-        # Same team? Likely correlated
         if leg1.get("team") == leg2.get("team"):
             return False
-        # Both overs on same game total = correlated
         if leg1.get("market") == "totals" and leg2.get("market") == "totals":
             return False
     return True
 
 def build_parlay(qualifying_legs, min_legs=2, max_legs=3):
-    """
-    Build the highest EV parlay from qualifying legs.
-    - Only combines uncorrelated legs
-    - Returns combined odds, combined probability, and EV
-    """
     if len(qualifying_legs) < min_legs:
         print(f"[Parlay] Not enough qualifying legs ({len(qualifying_legs)} found, need {min_legs})")
         return None
 
-    # Sort by edge descending
-    legs = sorted(qualifying_legs, key=lambda x: x["edge"], reverse=True)
-    
+    legs     = sorted(qualifying_legs, key=lambda x: x["edge"], reverse=True)
     selected = [legs[0]]
     for leg in legs[1:]:
         if len(selected) >= max_legs:
             break
-        # Check correlation with all already selected legs
         if all(check_correlation(leg, s) for s in selected):
             selected.append(leg)
 
     if len(selected) < min_legs:
-        print(f"[Parlay] Could not find {min_legs} uncorrelated legs")
         return None
 
-    # Combined probability = product of individual probs
     combined_prob = 1
     combined_odds = 1
     for leg in selected:
         combined_prob *= leg["model_prob"]
         combined_odds *= leg["odds"]
 
-    combined_ev = calculate_ev(combined_prob, combined_odds)
-
-    parlay = {
-        "legs": selected,
-        "num_legs": len(selected),
+    return {
+        "legs":          selected,
+        "num_legs":      len(selected),
         "combined_odds": round(combined_odds, 2),
         "combined_prob": round(combined_prob, 4),
-        "combined_ev": combined_ev,
-        "kelly_stake": kelly_criterion(combined_prob, combined_odds),
-        "generated_at": datetime.now().isoformat(),
+        "combined_ev":   calculate_ev(combined_prob, combined_odds),
+        "kelly_stake":   kelly_criterion(combined_prob, combined_odds),
+        "kelly_stake_pct": kelly_criterion(combined_prob, combined_odds),
+        "generated_at":  datetime.now().isoformat(),
     }
-    return parlay
 
 
-# ─── 5. MAIN PIPELINE ─────────────────────────────────────
+# ─── 5. MAIN ─────────────────────────────────────────────
 
 def run_pipeline():
     print("=" * 60)
@@ -302,39 +266,38 @@ def run_pipeline():
     # Step 1: Pull today's games
     games = get_todays_games()
     if not games:
-        print("No games today. Exiting.")
-        return
+        print("[Pipeline] No games found or API error — writing empty state")
+        with open(f"{DATA_DIR}/games_{TODAY}.json", "w") as f:
+            json.dump([], f)
+        return None, [], []
 
     # Step 2: Pull odds
     odds_games = get_nba_odds_spreads()
 
-    # Step 3: Pull player props for each game
+    # Step 3: Pull player props
     all_props = []
-    for game in odds_games[:5]:  # Limit to 5 games to save API calls on free tier
+    for game in odds_games[:5]:
         for market in ["player_points", "player_rebounds", "player_assists"]:
             props = get_nba_player_props(game["id"], market=market)
             if props:
                 rows = extract_props_from_event(props, market)
                 all_props.extend(rows)
 
-    props_df = pd.DataFrame(all_props)
+    props_df = pd.DataFrame(all_props) if all_props else pd.DataFrame()
     print(f"\n[Props] Pulled {len(props_df)} prop lines across all games")
 
-    # Save raw data
-    props_df.to_csv(f"{DATA_DIR}/props_{TODAY}.csv", index=False)
-    print(f"[Saved] {DATA_DIR}/props_{TODAY}.csv")
+    # Save
+    if not props_df.empty:
+        props_df.to_csv(f"{DATA_DIR}/props_{TODAY}.csv", index=False)
+        print(f"[Saved] {DATA_DIR}/props_{TODAY}.csv")
 
-    # Save games
     with open(f"{DATA_DIR}/games_{TODAY}.json", "w") as f:
         json.dump(games, f, indent=2)
-    print(f"[Saved] {DATA_DIR}/games_{TODAY}.json")
 
-    # Save odds
     with open(f"{DATA_DIR}/odds_{TODAY}.json", "w") as f:
         json.dump(odds_games, f, indent=2)
-    print(f"[Saved] {DATA_DIR}/odds_{TODAY}.json")
 
-    print("\n✅ Phase 1 complete. Run phase2_train_models.py next.")
+    print("\n✅ Phase 1 complete.")
     return props_df, games, odds_games
 
 
