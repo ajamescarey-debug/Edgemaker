@@ -1,30 +1,10 @@
-# ============================================================
-# EDGEMAKER — AUTOMATED DAILY PIPELINE
-# File: .github/workflows/daily_pipeline.yml
-#
-# Schedule: 8am AEST = 10pm UTC (previous day)
-# Runs: phase1 → phase5c (x3 snapshots) → phase5e → phase6
-# Commits updated results.json → Netlify auto-deploys
-# ============================================================
-
 name: Edgemaker Daily Pipeline
 
 on:
   schedule:
-    # 10pm UTC = 8am AEST (UTC+10)
-    # Runs daily, 7 days a week
     - cron: '0 22 * * *'
-
-    # Second run at 6am UTC = 4pm AEST (pre-game refresh)
     - cron: '0 6 * * *'
-
-  # Allow manual trigger from GitHub Actions UI
   workflow_dispatch:
-    inputs:
-      reason:
-        description: 'Reason for manual run'
-        required: false
-        default: 'Manual trigger'
 
 jobs:
   run-pipeline:
@@ -33,137 +13,45 @@ jobs:
 
     steps:
 
-      # ── 1. Checkout repo ──────────────────────────────────
       - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          fetch-depth: 0
+        uses: actions/checkout@v3
 
-      # ── 2. Set up Python ──────────────────────────────────
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
+      - name: Set up Python
+        run: |
+          python3 --version
+          python3 -m pip install --upgrade pip
 
-      # ── 3. Install dependencies ───────────────────────────
       - name: Install dependencies
         run: |
-          pip install \
-            requests \
-            pandas \
-            numpy \
-            scikit-learn \
-            xgboost \
-            joblib \
-            python-dotenv \
-            anthropic
+          pip3 install requests pandas numpy scikit-learn xgboost joblib python-dotenv anthropic
 
-      # ── 4. Restore cached models ──────────────────────────
-      # Models are trained once and cached — no need to retrain daily
-      - name: Cache trained models
-        uses: actions/cache@v4
-        with:
-          path: models/
-          key: edgemaker-models-v1
-          restore-keys: edgemaker-models-
-
-      # ── 5. Phase 1: Pull today's data ─────────────────────
       - name: Phase 1 — Pull NBA + odds data
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
-        run: python phase1_data_pipeline.py
+        run: python3 phase1_data_pipeline.py
 
-      # ── 6. Phase 5c: Line movement snapshot #1 ────────────
-      - name: Phase 5c — Line snapshot (opening)
+      - name: Phase 5c — Line snapshot
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
-        run: python phase5c_line_movement.py
+        run: python3 phase5c_line_movement.py
 
-      # ── 7. Wait 30 min, take second snapshot ──────────────
-      - name: Wait 30 minutes
-        run: sleep 1800
-
-      - name: Phase 5c — Line snapshot (mid)
+      - name: Phase 5e — Full signal pipeline
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
-        run: python phase5c_line_movement.py
+        run: python3 phase5e_orchestrator.py
 
-      # ── 8. Phase 5e: Full signal pipeline ─────────────────
-      - name: Phase 5e — Run full signal pipeline
-        env:
-          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
-        run: python phase5e_orchestrator.py
-
-      # ── 9. Phase 6: Claude AI enrichment ──────────────────
-      - name: Phase 6 — Claude AI reasoning layer
+      - name: Phase 6 — Claude AI reasoning
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: python phase6_claude_enrichment.py
+        run: python3 phase6_claude_enrichment.py
 
-      # ── 10. Commit updated results to repo ────────────────
       - name: Commit and push results
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "Edgemaker Bot"
           git add dashboard/data/results.json
-          git add data/
-          # Only commit if there are changes
-          git diff --staged --quiet || git commit -m "🤖 Daily update $(date -u +'%Y-%m-%d %H:%M UTC')"
+          git diff --staged --quiet || git commit -m "Daily update $(date -u +'%Y-%m-%d %H:%M UTC')"
           git push
 
-      # ── 11. Log pipeline success ──────────────────────────
-      - name: Pipeline complete
-        run: |
-          echo "✅ Edgemaker pipeline completed at $(date -u)"
-          echo "Dashboard will auto-deploy via Netlify"
-
-  # ── Train models monthly (first day of each month) ────────
-  retrain-models:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'schedule'
-    timeout-minutes: 60
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Check if it's the 1st of the month
-        id: check_date
-        run: |
-          if [ "$(date +%d)" = "01" ]; then
-            echo "should_train=true" >> $GITHUB_OUTPUT
-          else
-            echo "should_train=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Set up Python
-        if: steps.check_date.outputs.should_train == 'true'
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install dependencies
-        if: steps.check_date.outputs.should_train == 'true'
-        run: pip install requests pandas numpy scikit-learn xgboost joblib
-
-      - name: Retrain models
-        if: steps.check_date.outputs.should_train == 'true'
-        run: |
-          echo "📅 Monthly model retrain triggered"
-          python phase2_train_models.py
-
-      - name: Cache new models
-        if: steps.check_date.outputs.should_train == 'true'
-        uses: actions/cache/save@v4
-        with:
-          path: models/
-          key: edgemaker-models-v1-${{ github.run_id }}
-
-      - name: Commit retrained models
-        if: steps.check_date.outputs.should_train == 'true'
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "Edgemaker Bot"
-          git add models/
-          git diff --staged --quiet || git commit -m "🧠 Monthly model retrain $(date -u +'%Y-%m')"
-          git push
+      - name: Done
+        run: echo "Pipeline complete at $(date -u)"
