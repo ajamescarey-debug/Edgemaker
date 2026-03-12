@@ -198,6 +198,10 @@ def extract_props_from_event(event_data, market_key):
 
 # ─── 3. EV + KELLY ────────────────────────────────────────
 
+def decimal_to_implied_prob(decimal_odds):
+    """Convert decimal odds to implied probability."""
+    return round(1 / decimal_odds, 4)
+
 def calculate_ev(model_prob, decimal_odds):
     profit = decimal_odds - 1
     return round((model_prob * profit) - ((1 - model_prob) * 1), 4)
