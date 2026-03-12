@@ -20,13 +20,6 @@ jobs:
           ref: main
           clean: true
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          ref: main
-          clean: true
-
       - name: Set up Python
         run: |
           python3 --version
