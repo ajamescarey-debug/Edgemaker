@@ -2,7 +2,7 @@
   "date": "",
   "generated_at": "",
   "pipeline_version": "6.0",
-  "daily_brief": "## Morning Brief - March 12, 2026\n\n**No Qualifying Parlay Today**\n\nThe model ran a full scan of tonight's NBA slate but failed to identify any plays meeting our minimum threshold criteria. Zero legs qualified at the base model level, meaning no matchups showed sufficient edge after accounting for line value, pace/efficiency metrics, and situational factors. With no sharp-confirmed opportunities and nothing flagging on our back-to-back or injury risk filters, we're sitting out rather than forcing suboptimal action. \n\nTomorrow we'll be monitoring line movement and any schedule advantages from teams coming off rest versus fatigued opponents.",
+  "daily_brief": "## Morning Brief - March 12, 2026\n\n**No qualifying parlay today \u2014 model sitting out.**\n\nOur base model found zero legs that met our statistical thresholds across tonight's slate, meaning the data didn't support any edges worth backing. When the model can't identify value that clears our confidence benchmarks\u2014factoring in line movement, pace matchups, and defensive efficiency\u2014we don't force action. Check back tomorrow as we'll be scanning for high-probability spots with cleaner setups and stronger statistical signals.",
   "qualifying_legs": [],
   "recommended_parlay": null,
   "signal_summary": {
@@ -21,6 +21,6 @@
     "parlay_ev": null
   },
   "model_metrics": {},
-  "enriched_at": "2026-03-12T01:28:36.451128",
+  "enriched_at": "2026-03-12T01:38:00.936877",
   "enrichment_version": "6.0"
 }
