@@ -2,7 +2,7 @@
   "date": "2026-03-12",
   "generated_at": "2026-03-12",
   "pipeline_version": "6.0",
-  "daily_brief": "## Morning Brief - March 12, 2026\n\n**No qualifying parlay today.** The model scanned tonight's NBA slate but found zero legs that met our base statistical thresholds for edge identification. Without any plays clearing the initial screening criteria, there were no opportunities to advance through our sharp confirmation, rest disadvantage, or injury risk filters. We'll be monitoring tomorrow's card for matchups with clearer statistical advantages and more favorable situational spots.",
+  "daily_brief": "## Morning Brief - March 12, 2026\n\n**No Qualifying Parlay Today**\n\nThe model scanned tonight's NBA slate but found zero legs meeting our threshold criteria across all filters. Neither the base statistical models nor the sharp money confirmations identified any edges worth backing, and situational factors like back-to-backs and injury concerns didn't provide additional opportunities. We're sitting out today rather than forcing action on marginal spots.\n\n**Tomorrow's Watch:** Look for fresh rest-advantage spots and potential line value after tonight's results settle in.",
   "qualifying_legs": [],
   "recommended_parlay": null,
   "signal_summary": {
@@ -21,6 +21,6 @@
     "parlay_ev": null
   },
   "model_metrics": {},
-  "enriched_at": "2026-03-12T02:12:27.778891",
+  "enriched_at": "2026-03-12T02:35:09.667683",
   "enrichment_version": "6.0"
 }
