@@ -2,7 +2,7 @@
   "date": "",
   "generated_at": "",
   "pipeline_version": "6.0",
-  "daily_brief": "",
+  "daily_brief": "## Morning Brief - March 12, 2026\n\n**No Qualifying Parlay Today**\n\nThe model ran a full scan of tonight's NBA slate but failed to identify any legs meeting our statistical thresholds for edge creation. With zero plays passing through the base model filters\u2014meaning no matchups showed sufficient deviation from market pricing on player props, spreads, or totals\u2014there's simply no qualifying opportunity that warrants action. This happens when the market is efficiently priced and our models can't find exploitable gaps in the numbers.\n\nWe'll reset tomorrow and look for cleaner spots where the data gives us a legitimate edge.",
   "qualifying_legs": [],
   "recommended_parlay": null,
   "signal_summary": {
@@ -20,5 +20,7 @@
     "parlay_odds": null,
     "parlay_ev": null
   },
-  "model_metrics": {}
+  "model_metrics": {},
+  "enriched_at": "2026-03-12T02:02:23.119212",
+  "enrichment_version": "6.0"
 }

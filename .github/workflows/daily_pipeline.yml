@@ -10,6 +10,8 @@ jobs:
   run-pipeline:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout repository
@@ -50,14 +52,14 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: python3 phase6_claude_enrichment.py
-
-      - name: Commit and push results
+        
+     - name: Commit and push results
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "Edgemaker Bot"
           git add dashboard/data/results.json
           git diff --staged --quiet || git commit -m "Daily update $(date -u +'%Y-%m-%d %H:%M UTC')"
-          git push
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/ajamescarey-debug/Edgemaker.git main
 
       - name: Done
         run: echo "Pipeline complete at $(date -u)"
