@@ -454,7 +454,7 @@ function render(data) {
 
 async function loadData() {
   try {
-    const r = await fetch('data/results.json?t='+Date.now());
+    const r = await fetch('dashboard/data/results.json?t='+Date.now());
     const data = await r.json();
     render(data);
   } catch(e) {
