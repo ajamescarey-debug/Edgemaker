@@ -357,7 +357,7 @@ function render(data) {
   // Brief
   const briefEl = document.getElementById('briefText');
   if(data.daily_brief) {
-    briefEl.textContent = data.daily_brief;
+    briefEl.innerText = data.daily_brief;
     briefEl.classList.remove('loading');
   } else {
     briefEl.textContent = p ? 'Parlay found — AI brief unavailable. Check results.json.' : 'No qualifying parlay today.';
@@ -454,10 +454,11 @@ function render(data) {
 
 async function loadData() {
   try {
-    // Production: swap DEMO for real fetch below
-    // const r = await fetch('data/results.json?t='+Date.now());
-    // const data = await r.json();
-    render(DEMO);
+    const r = await fetch('data/results.json?t='+Date.now());
+    const data = await r.json();
+    // Fill in date if missing
+    if (!data.date) data.date = new Date().toISOString().split('T')[0];
+    render(data);
   } catch(e) {
     document.getElementById('briefText').textContent = 'Failed to load data. Check results.json.';
   }

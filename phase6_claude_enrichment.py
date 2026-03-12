@@ -259,6 +259,8 @@ def run_enrichment():
     # Update results
     data["qualifying_legs"] = legs
     data["recommended_parlay"] = parlay
+    data["date"] = TODAY
+    data["generated_at"] = TODAY
     data["enriched_at"] = datetime.now().isoformat()
     data["enrichment_version"] = "6.0"
 
