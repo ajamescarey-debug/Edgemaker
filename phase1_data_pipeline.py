@@ -81,7 +81,18 @@ def get_recent_player_games(player_id, n=15):
         return resp.json().get("data", [])
     except Exception:
         return []
-
+      
+def get_team_players(team_id):
+    """Get active players for a team."""
+    url    = "https://api.balldontlie.io/v1/players"
+    params = {"team_ids[]": team_id, "per_page": 25}
+    try:
+        resp = requests.get(url, params=params, headers=BDL_HEADERS, timeout=10)
+        if resp.status_code != 200:
+            return []
+        return resp.json().get("data", [])
+    except Exception:
+        return []
 
 def build_player_features(player_id, player_name):
     """Build rolling features for a player used in the prop model."""
