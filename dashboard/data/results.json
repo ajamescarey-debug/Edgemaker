@@ -2,7 +2,7 @@
   "date": "",
   "generated_at": "",
   "pipeline_version": "6.0",
-  "daily_brief": "",
+  "daily_brief": "## Morning Brief - March 12, 2026\n\n**No Qualifying Parlay Today**\n\nThe model ran a full scan of tonight's NBA slate but failed to identify any plays meeting our minimum threshold criteria. Zero legs qualified at the base model level, meaning no matchups showed sufficient edge after accounting for line value, pace/efficiency metrics, and situational factors. With no sharp-confirmed opportunities and nothing flagging on our back-to-back or injury risk filters, we're sitting out rather than forcing suboptimal action. \n\nTomorrow we'll be monitoring line movement and any schedule advantages from teams coming off rest versus fatigued opponents.",
   "qualifying_legs": [],
   "recommended_parlay": null,
   "signal_summary": {
@@ -20,5 +20,7 @@
     "parlay_odds": null,
     "parlay_ev": null
   },
-  "model_metrics": {}
+  "model_metrics": {},
+  "enriched_at": "2026-03-12T01:28:36.451128",
+  "enrichment_version": "6.0"
 }
