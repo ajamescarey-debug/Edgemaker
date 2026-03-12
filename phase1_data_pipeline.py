@@ -141,7 +141,7 @@ def get_nba_odds_spreads():
     url    = "https://api.the-odds-api.com/v4/sports/basketball_nba/odds/"
     params = {
         "apiKey":     ODDS_API_KEY,
-        "regions":    "au",
+        "regions":    "us",
         "markets":    "spreads,totals",
         "oddsFormat": "decimal",
         "dateFormat": "iso",
@@ -163,7 +163,7 @@ def get_nba_player_props(event_id, market="player_points"):
     url    = f"https://api.the-odds-api.com/v4/sports/basketball_nba/events/{event_id}/odds"
     params = {
         "apiKey":     ODDS_API_KEY,
-        "regions":    "au",
+        "regions":    "us",
         "markets":    market,
         "oddsFormat": "decimal",
         "dateFormat": "iso",
