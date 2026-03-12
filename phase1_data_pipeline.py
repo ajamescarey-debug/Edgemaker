@@ -196,7 +196,38 @@ def extract_props_from_event(event_data, market_key):
     return rows
 
 
-# ─── 3. EV + KELLY ────────────────────────────────────────
+# ─── 3. MISSING FUNCTIONS NEEDED BY OTHER PHASES ─────────
+
+def get_team_players(team_id):
+    """Get active players for a team."""
+    url    = "https://api.balldontlie.io/v1/players"
+    params = {"team_ids[]": team_id, "per_page": 25}
+    try:
+        resp = requests.get(url, params=params, headers=BDL_HEADERS, timeout=10)
+        if resp.status_code != 200:
+            return []
+        return resp.json().get("data", [])
+    except Exception:
+        return []
+
+def get_best_line(props_df, player_name, side="Over"):
+    """Find the best odds available for a player prop across books."""
+    if props_df is None or props_df.empty:
+        return None
+    filtered = props_df[
+        (props_df["player"].str.contains(player_name, case=False, na=False)) &
+        (props_df["side"] == side)
+    ]
+    if filtered.empty:
+        return None
+    return filtered.loc[filtered["odds"].idxmax()]
+
+
+# ─── 4. EV + KELLY ────────────────────────────────────────
+
+def decimal_to_implied_prob(decimal_odds):
+    """Convert decimal odds to implied probability."""
+    return round(1 / decimal_odds, 4)
 
 def calculate_ev(model_prob, decimal_odds):
     profit = decimal_odds - 1
