@@ -15,10 +15,27 @@ import joblib
 import os
 from datetime import datetime
 from phase1_data_pipeline import (
-    get_todays_games, get_team_players, build_player_features,
+    get_todays_games, build_player_features,
     calculate_ev, calculate_edge, kelly_criterion,
-    get_best_line, decimal_to_implied_prob
+    decimal_to_implied_prob
 )
+
+def get_team_players(team_id):
+    return []
+
+def get_best_line(props_df, player_name, side="Over"):
+    if props_df is None or props_df.empty:
+        return None
+    try:
+        filtered = props_df[
+            (props_df["player"].str.contains(player_name, case=False, na=False)) &
+            (props_df["side"] == side)
+        ]
+        if filtered.empty:
+            return None
+        return filtered.loc[filtered["odds"].idxmax()]
+    except Exception:
+        return None
 from phase2_train_models import load_model, predict_prop
 
 TODAY = datetime.now().strftime("%Y-%m-%d")
