@@ -454,10 +454,9 @@ function render(data) {
 
 async function loadData() {
   try {
-    // Production: swap DEMO for real fetch below
-    // const r = await fetch('data/results.json?t='+Date.now());
-    // const data = await r.json();
-    render(DEMO);
+    const r = await fetch('data/results.json?t='+Date.now());
+    const data = await r.json();
+    render(data);
   } catch(e) {
     document.getElementById('briefText').textContent = 'Failed to load data. Check results.json.';
   }
