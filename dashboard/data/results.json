@@ -1,8 +1,8 @@
 {
-  "date": "2026-03-12",
-  "generated_at": "2026-03-12",
+  "date": "2026-03-16",
+  "generated_at": "2026-03-16",
   "pipeline_version": "6.0",
-  "daily_brief": "## Morning Brief - March 12, 2026\n\n**No Qualifying Parlay Today**\n\nThe model ran a full scan of today's NBA slate but failed to identify any legs that met our baseline threshold for betting consideration. With zero plays registering sufficient edge in the base model\u2014and consequently no opportunities to advance through our sharp confirmation, back-to-back, and injury risk filters\u2014we're sitting out entirely. This suggests the market is efficiently priced across the board today, with no exploitable inefficiencies in spreads, totals, or player props. Check back tomorrow as we'll be monitoring line movement and injury reports for fresh opportunities heading into the weekend.",
+  "daily_brief": "# NBA Betting Brief - March 16, 2026\n\n**No Qualifying Parlay Today**\n\nThe model scanned today's NBA slate but failed to identify any legs meeting our baseline criteria, resulting in zero plays advancing through the filtering process. Without even base-model legs to evaluate, there were no opportunities to assess for back-to-back fatigue, injury risk, or sharp money confirmation. We're sitting out today to preserve bankroll discipline rather than force action on subpar edges.\n\n**Tomorrow's Watch:** Look for a fuller slate with clearer rest advantages and more defined sharp/public splits to generate qualifying opportunities.",
   "qualifying_legs": [],
   "recommended_parlay": null,
   "signal_summary": {
@@ -21,6 +21,6 @@
     "parlay_ev": null
   },
   "model_metrics": {},
-  "enriched_at": "2026-03-12T22:27:40.744079",
+  "enriched_at": "2026-03-16T00:37:13.016120",
   "enrichment_version": "6.0"
 }
