@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EDGEMAKER</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:      #05080f;
+    --panel:   #0b1120;
+    --border:  #141f33;
+    --gold:    #f5c842;
+    --cyan:    #00d4ff;
+    --green:   #00ff88;
+    --red:     #ff4060;
+    --purple:  #a855f7;
+    --muted:   #3d5070;
+    --text:    #8da8c8;
+    --bright:  #e8f0ff;
+    --tab:     #1a6ecc;
+    --betr:    #7c3aed;
+    --pbet:    #cc2020;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;min-height:100vh;overflow-x:hidden;}
+
+  /* ── Noise texture overlay ── */
+  body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:0;}
+
+  /* ── Header ── */
+  .header{
+    position:relative;z-index:1;
+    padding:28px 40px 24px;
+    border-bottom:1px solid var(--border);
+    display:flex;align-items:flex-end;justify-content:space-between;
+    background:linear-gradient(135deg,#05080f 0%,#080d1a 50%,#05080f 100%);
+  }
+  .logo-block{}
+  .logo{
+    font-family:'Syne',sans-serif;font-size:48px;font-weight:800;
+    letter-spacing:-1px;line-height:1;color:var(--bright);
+    background:linear-gradient(90deg,var(--bright) 0%,var(--gold) 100%);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  }
+  .logo-sub{font-size:10px;letter-spacing:4px;color:var(--muted);margin-top:4px;text-transform:uppercase;}
+  .header-right{text-align:right;}
+  .live-badge{
+    display:inline-flex;align-items:center;gap:6px;
+    background:rgba(0,255,136,0.08);border:1px solid rgba(0,255,136,0.2);
+    border-radius:20px;padding:5px 12px;margin-bottom:8px;
+  }
+  .live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 1.5s infinite;}
+  @keyframes blink{0%,100%{opacity:1;}50%{opacity:0.2;}}
+  .live-text{font-size:10px;letter-spacing:2px;color:var(--green);}
+  .header-meta{font-size:10px;color:var(--muted);line-height:1.8;}
+
+  /* ── Nav ── */
+  .nav{
+    position:relative;z-index:1;
+    display:flex;gap:0;padding:0 40px;
+    border-bottom:1px solid var(--border);
+    background:var(--panel);
+  }
+  .nav-tab{
+    padding:14px 22px;font-size:10px;letter-spacing:2px;text-transform:uppercase;
+    color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;
+    transition:all 0.2s;font-family:'Syne',sans-serif;font-weight:600;
+  }
+  .nav-tab:hover{color:var(--text);}
+  .nav-tab.active{color:var(--gold);border-bottom-color:var(--gold);}
+
+  /* ── Main ── */
+  .main{position:relative;z-index:1;padding:32px 40px;max-width:1500px;}
+  .page{display:none;}
+  .page.active{display:block;}
+
+  /* ── KPI strip ── */
+  .kpi-strip{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:32px;}
+  .kpi{
+    background:var(--panel);border:1px solid var(--border);border-radius:6px;
+    padding:16px 18px;position:relative;overflow:hidden;
+  }
+  .kpi::before{
+    content:'';position:absolute;top:0;left:0;right:0;height:2px;
+    background:linear-gradient(90deg,transparent,var(--gold),transparent);
+    opacity:0.4;
+  }
+  .kpi-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+  .kpi-val{font-family:'Syne',sans-serif;font-size:28px;font-weight:700;color:var(--bright);line-height:1;}
+  .kpi-val.g{color:var(--green);}
+  .kpi-val.r{color:var(--red);}
+  .kpi-val.gold{color:var(--gold);}
+
+  /* ── Brief card ── */
+  .brief-card{
+    background:var(--panel);border:1px solid var(--border);border-radius:8px;
+    padding:24px 28px;margin-bottom:28px;
+    border-left:3px solid var(--gold);
+  }
+  .brief-header{
+    display:flex;align-items:center;gap:10px;margin-bottom:14px;
+  }
+  .brief-icon{font-size:18px;}
+  .brief-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--gold);letter-spacing:2px;text-transform:uppercase;}
+  .brief-subtitle{font-size:10px;color:var(--muted);margin-left:auto;}
+  .brief-text{font-size:13px;color:var(--text);line-height:1.8;font-family:'JetBrains Mono',monospace;}
+
+  /* ── Section ── */
+  .section{margin-bottom:32px;}
+  .section-hdr{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
+  .section-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--bright);letter-spacing:1px;text-transform:uppercase;}
+  .count-badge{font-size:10px;padding:3px 10px;border-radius:3px;background:rgba(245,200,66,0.1);color:var(--gold);border:1px solid rgba(245,200,66,0.2);letter-spacing:1px;}
+
+  /* ── Parlay card ── */
+  .parlay-card{
+    background:linear-gradient(135deg,rgba(245,200,66,0.05) 0%,var(--panel) 100%);
+    border:1px solid rgba(245,200,66,0.3);border-radius:8px;padding:24px 28px;margin-bottom:28px;
+  }
+  .parlay-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+  .parlay-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--gold);}
+  .parlay-odds{font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:var(--bright);}
+  .parlay-meta{display:flex;gap:24px;margin-bottom:20px;}
+  .parlay-stat{display:flex;flex-direction:column;gap:4px;}
+  .parlay-stat-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
+  .parlay-stat-val{font-size:15px;color:var(--bright);}
+  .parlay-stat-val.g{color:var(--green);}
+  .parlay-legs{display:flex;flex-direction:column;gap:8px;}
+  .parlay-leg{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:10px 14px;border-radius:5px;
+    background:rgba(255,255,255,0.03);border:1px solid var(--border);
+  }
+  .leg-info{font-size:12px;color:var(--bright);}
+  .leg-meta{font-size:11px;color:var(--muted);}
+  .leg-odds{font-size:14px;color:var(--gold);font-weight:500;}
+
+  /* ── Bet cards ── */
+  .bet-card{
+    background:var(--panel);border:1px solid var(--border);
+    border-left:3px solid var(--green);border-radius:6px;
+    padding:18px 22px;margin-bottom:10px;
+  }
+  .bet-card.prop{border-left-color:var(--cyan);}
+  .bet-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .bet-game{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;color:var(--bright);}
+  .bet-tag{font-size:9px;padding:3px 8px;border-radius:3px;letter-spacing:1px;border:1px solid;}
+  .bet-tag.spread{color:var(--green);border-color:rgba(0,255,136,0.3);background:rgba(0,255,136,0.05);}
+  .bet-tag.prop{color:var(--cyan);border-color:rgba(0,212,255,0.3);background:rgba(0,212,255,0.05);}
+  .bet-pick{font-size:12px;color:var(--cyan);margin-bottom:12px;}
+  .bet-stats{display:flex;gap:20px;margin-bottom:14px;}
+  .bs{display:flex;flex-direction:column;gap:3px;}
+  .bs-l{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);}
+  .bs-v{font-size:14px;color:var(--bright);}
+  .bs-v.g{color:var(--green);}
+  .bs-v.c{color:var(--cyan);}
+
+  /* ── Books row ── */
+  .books-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+  .books-row{display:flex;gap:8px;}
+  .book-pill{
+    flex:1;padding:8px 12px;border-radius:5px;text-align:center;
+    border:1px solid var(--border);background:rgba(255,255,255,0.02);
+    transition:all 0.15s;
+  }
+  .book-pill.best{border-color:var(--gold);background:rgba(245,200,66,0.06);}
+  .book-pill.best .book-odds{color:var(--gold);}
+  .book-name{font-size:9px;letter-spacing:1px;color:var(--muted);margin-bottom:2px;}
+  .book-spread{font-size:10px;color:var(--text);margin-bottom:2px;}
+  .book-odds{font-size:15px;font-weight:500;color:var(--text);}
+  .book-star{font-size:9px;color:var(--gold);margin-top:2px;}
+
+  /* ── All games table ── */
+  .tbl-wrap{background:var(--panel);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+  table{width:100%;border-collapse:collapse;}
+  th{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);padding:12px 16px;border-bottom:1px solid var(--border);text-align:left;font-family:'Syne',sans-serif;}
+  td{padding:12px 16px;border-bottom:1px solid rgba(20,31,51,0.5);color:var(--text);vertical-align:middle;}
+  tr:hover td{background:rgba(255,255,255,0.015);}
+  .v-bet{font-size:9px;padding:3px 8px;border-radius:3px;color:var(--green);border:1px solid rgba(0,255,136,0.25);background:rgba(0,255,136,0.05);}
+  .v-no{font-size:9px;padding:3px 8px;border-radius:3px;color:var(--muted);border:1px solid var(--border);}
+
+  /* ── P&L ── */
+  .pnl-w{color:var(--green);}
+  .pnl-l{color:var(--red);}
+
+  /* ── Empty ── */
+  .empty{text-align:center;padding:48px;color:var(--muted);border:1px dashed var(--border);border-radius:8px;}
+  .empty-icon{font-size:36px;margin-bottom:12px;}
+
+  @media(max-width:1000px){
+    .kpi-strip{grid-template-columns:repeat(3,1fr);}
+    .main{padding:20px;}
+    .header{padding:20px;}
+    .nav{padding:0 20px;overflow-x:auto;}
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo-block">
+    <div class="logo">EDGEMAKER</div>
+    <div class="logo-sub">NBA Parlay Intelligence · Automated</div>
+  </div>
+  <div class="header-right">
+    <div class="live-badge"><span class="live-dot"></span><span class="live-text">LIVE</span></div>
+    <div class="header-meta">
+      <div id="last-run">LAST RUN: —</div>
+      <div id="au-clock">—</div>
+    </div>
+  </div>
+</div>
+
+<div class="nav">
+  <div class="nav-tab active" onclick="showPage('today',this)">🎯 Today</div>
+  <div class="nav-tab" onclick="showPage('spreads',this)">📊 Spreads</div>
+  <div class="nav-tab" onclick="showPage('props',this)">🏀 Props</div>
+  <div class="nav-tab" onclick="showPage('pnl',this)">💰 P&L</div>
+</div>
+
+<div class="main">
+
+  <!-- KPI Strip -->
+  <div class="kpi-strip" style="margin-top:24px;">
+    <div class="kpi"><div class="kpi-label">Spread Bets</div><div class="kpi-val g" id="k-spreads">—</div></div>
+    <div class="kpi"><div class="kpi-label">Prop Legs</div><div class="kpi-val c" id="k-props" style="color:var(--cyan)">—</div></div>
+    <div class="kpi"><div class="kpi-label">Parlay Found</div><div class="kpi-val gold" id="k-parlay">—</div></div>
+    <div class="kpi"><div class="kpi-label">Season Record</div><div class="kpi-val" id="k-record">—</div></div>
+    <div class="kpi"><div class="kpi-label">Season ROI</div><div class="kpi-val" id="k-roi">—</div></div>
+    <div class="kpi"><div class="kpi-label">Win Rate</div><div class="kpi-val" id="k-wr">—</div></div>
+  </div>
+
+  <!-- TODAY PAGE -->
+  <div class="page active" id="page-today">
+
+    <!-- Brief -->
+    <div class="brief-card">
+      <div class="brief-header">
+        <span class="brief-icon">🧠</span>
+        <span class="brief-title">Daily Intelligence Brief</span>
+        <span class="brief-subtitle">Generated by Claude · 6:15am AEST</span>
+      </div>
+      <div class="brief-text" id="brief-text">Loading today's analysis...</div>
+    </div>
+
+    <!-- Parlay -->
+    <div class="section">
+      <div class="section-hdr">
+        <div class="section-title">Recommended Parlay</div>
+        <div class="count-badge" id="parlay-badge">—</div>
+      </div>
+      <div id="parlay-container">
+        <div class="empty"><div class="empty-icon">🎯</div>No qualifying parlay today.</div>
+      </div>
+    </div>
+
+    <!-- Top picks -->
+    <div class="section">
+      <div class="section-hdr">
+        <div class="section-title">Top Qualifying Picks</div>
+        <div class="count-badge" id="picks-badge">0</div>
+      </div>
+      <div id="picks-container">
+        <div class="empty"><div class="empty-icon">🏀</div>Loading...</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SPREADS PAGE -->
+  <div class="page" id="page-spreads">
+    <div class="section-hdr"><div class="section-title">All Spread Games Scoped</div></div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>Game</th><th>Vegas Line</th><th>Model</th><th>Edge</th>
+          <th>Win Prob</th><th>Confidence</th><th>Verdict</th><th>Reason</th>
+        </tr></thead>
+        <tbody id="spreads-body"><tr><td colspan="8" style="text-align:center;padding:32px;color:var(--muted);">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- PROPS PAGE -->
+  <div class="page" id="page-props">
+    <div class="section-hdr"><div class="section-title">Qualifying Prop Legs</div></div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>Player</th><th>Stat</th><th>Side</th><th>Line</th>
+          <th>Model Prob</th><th>Edge</th><th>EV</th><th>Best Odds</th><th>Book</th><th>Matchup</th>
+        </tr></thead>
+        <tbody id="props-body"><tr><td colspan="10" style="text-align:center;padding:32px;color:var(--muted);">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- P&L PAGE -->
+  <div class="page" id="page-pnl">
+    <div class="section-hdr"><div class="section-title">P&L Tracker</div></div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>Date</th><th>Type</th><th>Bet</th><th>Book</th>
+          <th>Odds</th><th>Stake %</th><th>Result</th><th>P&L</th>
+        </tr></thead>
+        <tbody id="pnl-body"><tr><td colspan="8" style="text-align:center;padding:32px;color:var(--muted);">No bets placed yet.</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const BOOK_NAMES = {tab:'TAB',betr:'Betr',pointsbet:'PointsBet'};
+
+function showPage(name, el) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  if(el) el.classList.add('active');
+}
+
+function renderParlay(p) {
+  const c = document.getElementById('parlay-container');
+  const b = document.getElementById('parlay-badge');
+  if (!p) {
+    b.textContent = 'NONE';
+    c.innerHTML = '<div class="empty"><div class="empty-icon">🎯</div>No qualifying parlay today.</div>';
+    return;
+  }
+  b.textContent = `${p.num_legs} LEGS`;
+  const legsHtml = (p.legs||[]).map(l => `
+    <div class="parlay-leg">
+      <div>
+        <div class="leg-info">${l.type==='spread' ? (l.bet_side||l.game) : `${l.player} ${l.stat} ${l.side} ${l.line}`}</div>
+        <div class="leg-meta">${l.type==='spread' ? l.game : l.matchup}</div>
+      </div>
+      <div class="leg-odds">$${l.best_odds||'—'}</div>
+    </div>`).join('');
+  c.innerHTML = `
+    <div class="parlay-card">
+      <div class="parlay-header">
+        <div>
+          <div class="parlay-title">🎯 RECOMMENDED PARLAY</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">${p.num_legs} legs · generated ${(p.generated_at||'').slice(0,16)}</div>
+        </div>
+        <div class="parlay-odds">$${p.combined_odds}</div>
+      </div>
+      <div class="parlay-meta">
+        <div class="parlay-stat"><div class="parlay-stat-label">Win Prob</div><div class="parlay-stat-val">${(p.combined_prob*100).toFixed(1)}%</div></div>
+        <div class="parlay-stat"><div class="parlay-stat-label">EV</div><div class="parlay-stat-val ${p.combined_ev>0?'g':''}">${p.combined_ev>0?'+':''}${p.combined_ev?.toFixed(3)}</div></div>
+        <div class="parlay-stat"><div class="parlay-stat-label">Kelly Stake</div><div class="parlay-stat-val">${((p.kelly_stake||0)*100).toFixed(1)}%</div></div>
+      </div>
+      <div class="parlay-legs">${legsHtml}</div>
+    </div>`;
+}
+
+function renderPicks(spreads, props) {
+  const c = document.getElementById('picks-container');
+  const b = document.getElementById('picks-badge');
+  const all = [...(spreads||[]), ...(props||[])];
+  b.textContent = all.length;
+  if (!all.length) {
+    c.innerHTML = '<div class="empty"><div class="empty-icon">🔍</div>No qualifying bets today.</div>';
+    return;
+  }
+  c.innerHTML = all.map(item => {
+    if (item.type === 'spread') {
+      const books = item.books||{};
+      const oddsHtml = Object.entries(books).map(([bk,d])=>`
+        <div class="book-pill ${bk===item.best_book?'best':''}">
+          <div class="book-name">${BOOK_NAMES[bk]||bk}</div>
+          <div class="book-spread">${d.spread>0?'+':''}${d.spread}</div>
+          <div class="book-odds">$${d.odds?.toFixed(2)||'—'}</div>
+          ${bk===item.best_book?'<div class="book-star">★ BEST</div>':''}
+        </div>`).join('');
+      return `
+        <div class="bet-card">
+          <div class="bet-top">
+            <div class="bet-game">${item.game}</div>
+            <span class="bet-tag spread">SPREAD</span>
+          </div>
+          <div class="bet-pick">📌 ${item.bet_side||'—'}</div>
+          <div class="bet-stats">
+            <div class="bs"><div class="bs-l">Edge</div><div class="bs-v g">${item.edge}pts</div></div>
+            <div class="bs"><div class="bs-l">Confidence</div><div class="bs-v g">${item.confidence}/100</div></div>
+            <div class="bs"><div class="bs-l">Win Prob</div><div class="bs-v">${item.win_prob}</div></div>
+            <div class="bs"><div class="bs-l">Model</div><div class="bs-v">${item.model_spread}</div></div>
+            <div class="bs"><div class="bs-l">Vegas</div><div class="bs-v">${item.vegas_line}</div></div>
+          </div>
+          <div class="books-label">BEST ODDS ACROSS BOOKS</div>
+          <div class="books-row">${oddsHtml||'<span style="color:var(--muted);">No AU odds</span>'}</div>
+        </div>`;
+    } else {
+      return `
+        <div class="bet-card prop">
+          <div class="bet-top">
+            <div class="bet-game">${item.player}</div>
+            <span class="bet-tag prop">PROP</span>
+          </div>
+          <div class="bet-pick">📌 ${item.stat.toUpperCase()} ${item.side} ${item.line} · ${item.matchup}</div>
+          <div class="bet-stats">
+            <div class="bs"><div class="bs-l">Edge</div><div class="bs-v c">${(item.edge*100).toFixed(1)}%</div></div>
+            <div class="bs"><div class="bs-l">Model Prob</div><div class="bs-v c">${(item.model_prob*100).toFixed(1)}%</div></div>
+            <div class="bs"><div class="bs-l">Implied</div><div class="bs-v">${(item.implied_prob*100).toFixed(1)}%</div></div>
+            <div class="bs"><div class="bs-l">EV</div><div class="bs-v ${item.ev>0?'g':''}">${item.ev>0?'+':''}${item.ev?.toFixed(3)}</div></div>
+            <div class="bs"><div class="bs-l">Best Odds</div><div class="bs-v" style="color:var(--gold);">$${item.best_odds?.toFixed(2)||'—'}</div></div>
+            <div class="bs"><div class="bs-l">Book</div><div class="bs-v">${BOOK_NAMES[item.best_book]||item.best_book}</div></div>
+          </div>
+        </div>`;
+    }
+  }).join('');
+}
+
+function renderSpreads(spreads) {
+  const tb = document.getElementById('spreads-body');
+  if (!spreads?.length) { tb.innerHTML='<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--muted);">No spread games today.</td></tr>'; return; }
+  tb.innerHTML = spreads.map(g=>`
+    <tr>
+      <td style="color:var(--bright);font-family:'Syne',sans-serif;">${g.game}</td>
+      <td>${g.vegas_line}</td>
+      <td>${g.model_spread}</td>
+      <td style="color:${g.edge>=3&&g.edge<=7?'var(--green)':'var(--text)'};">${g.edge}pts</td>
+      <td>${g.win_prob}</td>
+      <td style="color:${g.confidence>=50&&g.confidence<=70?'var(--green)':'var(--text)'};">${g.confidence}/100</td>
+      <td>${g.qualifies?'<span class="v-bet">BET</span>':'<span class="v-no">NO BET</span>'}</td>
+      <td style="color:var(--muted);font-size:11px;">${g.reason||'—'}</td>
+    </tr>`).join('');
+}
+
+function renderProps(props) {
+  const tb = document.getElementById('props-body');
+  if (!props?.length) { tb.innerHTML='<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--muted);">No qualifying props today.</td></tr>'; return; }
+  tb.innerHTML = props.map(p=>`
+    <tr>
+      <td style="color:var(--bright);">${p.player}</td>
+      <td style="color:var(--cyan);">${p.stat.toUpperCase()}</td>
+      <td>${p.side}</td>
+      <td>${p.line}</td>
+      <td style="color:var(--cyan);">${(p.model_prob*100).toFixed(1)}%</td>
+      <td style="color:var(--green);">${(p.edge*100).toFixed(1)}%</td>
+      <td style="color:${p.ev>0?'var(--green)':'var(--red)'};">${p.ev>0?'+':''}${p.ev?.toFixed(3)}</td>
+      <td style="color:var(--gold);">$${p.best_odds?.toFixed(2)||'—'}</td>
+      <td>${BOOK_NAMES[p.best_book]||p.best_book||'—'}</td>
+      <td style="color:var(--muted);font-size:11px;">${p.matchup}</td>
+    </tr>`).join('');
+}
+
+function renderPnL(bets) {
+  const tb = document.getElementById('pnl-body');
+  if (!bets?.length) { tb.innerHTML='<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--muted);">No bets placed yet.</td></tr>'; return; }
+  tb.innerHTML = bets.map(b=>`
+    <tr>
+      <td>${b.date}</td>
+      <td><span class="bet-tag ${b.type||'spread'}">${(b.type||'spread').toUpperCase()}</span></td>
+      <td style="color:var(--bright);">${b.game||b.player||'—'}</td>
+      <td>${b.book||'—'}</td>
+      <td>${b.odds?'$'+b.odds.toFixed(2):'—'}</td>
+      <td>${b.stake_pct?(b.stake_pct*100).toFixed(0)+'%':'—'}</td>
+      <td class="${b.result==='WIN'?'pnl-w':b.result==='LOSS'?'pnl-l':''}">${b.result||'PENDING'}</td>
+      <td class="${b.pnl>0?'pnl-w':b.pnl<0?'pnl-l':''}">${b.pnl!=null?(b.pnl>0?'+':'')+b.pnl.toFixed(1)+'%':'—'}</td>
+    </tr>`).join('');
+}
+
+function updateKPIs(log, bets) {
+  const today = log?.[log.length-1];
+  document.getElementById('k-spreads').textContent = today?.total_spread_bets ?? '—';
+  document.getElementById('k-props').textContent   = today?.total_prop_legs ?? '—';
+  document.getElementById('k-parlay').textContent  = today?.parlay_found ? 'YES' : (today ? 'NO' : '—');
+  const placed = (bets||[]).filter(b=>b.result);
+  const wins   = placed.filter(b=>b.result==='WIN').length;
+  document.getElementById('k-record').textContent = placed.length ? `${wins}-${placed.length-wins}` : '0-0';
+  const roi = placed.length ? (placed.reduce((s,b)=>s+(b.pnl||0),0)/placed.length).toFixed(1) : null;
+  const roiEl = document.getElementById('k-roi');
+  roiEl.textContent = roi!=null ? `${roi>0?'+':''}${roi}%` : '—';
+  roiEl.className = 'kpi-val' + (roi>0?' g':roi<0?' r':'');
+  document.getElementById('k-wr').textContent = placed.length ? `${((wins/placed.length)*100).toFixed(0)}%` : '—';
+}
+
+function updateClock() {
+  document.getElementById('au-clock').textContent =
+    new Date().toLocaleString('en-AU',{timeZone:'Australia/Melbourne',hour12:false}) + ' AEST';
+}
+setInterval(updateClock,1000); updateClock();
+
+async function loadData() {
+  try {
+    const res  = await fetch('data/results.json?t='+Date.now());
+    const data = await res.json();
+    const log  = data.daily_log||[];
+    const bets = data.bets||[];
+    const today = log[log.length-1];
+
+    if (today) {
+      document.getElementById('last-run').textContent = `LAST RUN: ${today.date} ${today.run_time_aest||''}`;
+      document.getElementById('brief-text').textContent = today.daily_brief || 'No brief available.';
+      renderParlay(today.parlay);
+      renderPicks(today.spread_bets||[], today.prop_legs||[]);
+      renderSpreads(today.spread_bets||[]);
+      renderProps(today.prop_legs||[]);
+    }
+
+    updateKPIs(log, bets);
+    renderPnL(bets);
+
+  } catch(e) {
+    console.error(e);
+    document.getElementById('brief-text').textContent = 'Could not load data. Pipeline may not have run yet.';
+  }
+}
+
+loadData();
+</script>
+</body>
+</html>
