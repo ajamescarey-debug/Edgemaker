@@ -1,4 +1,17 @@
 {
-  "daily_log": [],
+  "daily_log": [
+    {
+      "date": "2026-03-22",
+      "day_number": 1,
+      "run_time_aest": "11:51",
+      "daily_brief": "## NBA Betting Intelligence Brief \u2014 March 22, 2026\n\n**EMPTY SLATE**\n\nNo qualifying plays today across spreads, props, or parlays. The models found nothing with edge worth backing in Sunday's slate, which tells you everything you need to know about the current pricing efficiency and line value. When the board is this tight, discipline is the play\u2014forced action is how sharps become squares. We're sitting this one out and preserving capital for spots with legitimate edge later in the week.",
+      "spread_bets": [],
+      "prop_legs": [],
+      "parlay": null,
+      "total_spread_bets": 0,
+      "total_prop_legs": 0,
+      "parlay_found": false
+    }
+  ],
   "bets": []
 }
