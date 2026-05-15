@@ -659,6 +659,18 @@
       "total_spread_bets": 0,
       "total_prop_legs": 0,
       "parlay_found": false
+    },
+    {
+      "date": "2026-05-16",
+      "day_number": 56,
+      "run_time_aest": "07:18",
+      "daily_brief": "Brief unavailable: Error code: 401 - {'type': 'error', 'error': {'type': 'authentication_error', 'message': 'invalid x-api-key'}, 'request_id': 'req_011Cb53wsa3CwxrTYuSHCZ35'}",
+      "spread_bets": [],
+      "prop_legs": [],
+      "parlay": null,
+      "total_spread_bets": 0,
+      "total_prop_legs": 0,
+      "parlay_found": false
     }
   ],
   "bets": []
