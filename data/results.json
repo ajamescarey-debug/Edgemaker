@@ -1643,6 +1643,18 @@
       "total_spread_bets": 0,
       "total_prop_legs": 0,
       "parlay_found": false
+    },
+    {
+      "date": "2026-08-06",
+      "day_number": 138,
+      "run_time_aest": "07:31",
+      "daily_brief": "Brief unavailable: Error code: 401 - {'type': 'error', 'error': {'type': 'authentication_error', 'message': 'API key is invalid.'}, 'request_id': None}",
+      "spread_bets": [],
+      "prop_legs": [],
+      "parlay": null,
+      "total_spread_bets": 0,
+      "total_prop_legs": 0,
+      "parlay_found": false
     }
   ],
   "bets": []
